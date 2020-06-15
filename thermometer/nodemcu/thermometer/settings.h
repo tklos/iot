@@ -3,8 +3,8 @@
 
 
 /* Thermometer */
-extern int thermometer_pin;
-extern unsigned long interval_measurement;
+extern const int thermometer_pin;
+extern const unsigned long interval_measurement;
 
 
 /* WiFi */
@@ -14,6 +14,7 @@ extern const char *wifi_password;
 
 /* Collect server */
 extern const char *collect_server;
+extern const int collect_port;
 extern const char *collect_host;
 extern const char *collect_api_key;
 extern const char *collect_measurement_resource;
