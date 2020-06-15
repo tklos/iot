@@ -1,0 +1,5 @@
+
+Metro 68ccc2b: https://github.com/thomasfredericks/Metro-Arduino-Wiring
+OneWire 2.3.5: https://github.com/PaulStoffregen/OneWire
+DS18B20 3.8.0: https://github.com/milesburton/Arduino-Temperature-Control-Library
+
