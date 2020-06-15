@@ -1,11 +1,13 @@
 #include "settings.h"
 #include "wifi.h"
 #include "ds18b20.h"
+#include "display.h"
 #include "collect.h"
 #include "metro.h"
 
 
 DS18B20 ds18b20(thermometer_pin);
+Display display;
 Collect collect(
 	collect_server,
 	collect_port,
@@ -52,6 +54,10 @@ void process_single_measurement() {
 
 	String temp_s = String(temp, 2);
 	Serial.println(String() + "Temperature: " + temp_s);
+
+
+	/* Display temperature */
+	display.display_temperature(temp_s);
 
 
 	/* Send to collect server */

@@ -2,8 +2,8 @@
 
 
 /* Thermometer */
-int thermometer_pin =
-unsigned long interval_measurement =
+int thermometer_pin = 12;
+unsigned long interval_measurement = 60000;
 
 
 /* WiFi */
@@ -17,5 +17,5 @@ int collect_port = 443;
 const char *collect_host =
 const char *collect_api_key =
 const char *collect_measurement_resource = "/api/measurements/";
-const unsigned long collect_response_timeout = 5000;
+const unsigned long collect_response_timeout = 10000;
 const int max_data_len = 30;
