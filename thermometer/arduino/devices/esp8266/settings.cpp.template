@@ -1,0 +1,12 @@
+#include "settings.h"
+
+
+const char *wifi_ssid =
+const char *wifi_password =
+
+const char *collect_server =
+const char *collect_host =
+const char *collect_api_key =
+const char *collect_measurement_resource = "/api/measurements/";
+const unsigned long collect_response_timeout = 5000;
+const int max_data_len = 30;

@@ -1,0 +1,7 @@
+#include "settings.h"
+
+
+int one_wire_pin = 2;
+int serial_esp8266_pins[2] = {10, 11};
+
+unsigned long interval_measurement = 60000;
