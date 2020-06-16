@@ -1,0 +1,21 @@
+#include "settings.h"
+
+
+/* Thermometer */
+int thermometer_pin = 12;
+unsigned long interval_measurement = 60000;
+
+
+/* WiFi */
+const char *wifi_ssid =
+const char *wifi_password =
+
+
+/* Collect server */
+const char *collect_server =
+int collect_port = 443;
+const char *collect_host =
+const char *collect_api_key =
+const char *collect_measurement_resource = "/api/measurements/";
+const unsigned long collect_response_timeout = 10000;
+const int max_data_len = 30;
