@@ -19,7 +19,6 @@ MH-Z19 pin | Connected to
 ------------|:------------
 Vin | NodeMCU 5V pin or 5V power supply
 GND | GND
-PWM | NodeMCU pin 12 (D6)
 Tx | NodeMCU pin 13 (D7)
 Rx | NodeMCU pin 15 (D8)
 

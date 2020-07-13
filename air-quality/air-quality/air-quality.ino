@@ -8,7 +8,6 @@
 
 #define MHZ19_RX_PIN 13
 #define MHZ19_TX_PIN 15
-#define MHZ19_PWM_PIN 12
 
 
 
@@ -58,19 +57,16 @@ void process_single_measurement() {
 
 	/* Get CO2 measurement */
 	int co2 = mhz19.get_co2(serial_mhz19);
-	int co2_pwm = mhz19.get_co2_pwm(MHZ19_PWM_PIN);
 	Serial.println(co2);
-	Serial.println(co2_pwm);
 
-	String co2_s = String(co2);
-	String co2_pwm_s = String(co2_pwm);
+	String co2_s = (co2 == -1) ? String("null") : String(co2);
 
 
 	/* Display data */
-	display.display_data(co2_s, co2_pwm_s);
+	display.display_data(co2_s);
 
 
 	/* Send to collect server */
-	String data = co2_s + "," + co2_pwm_s;
+	String data = co2_s;
 	collect.send_data(data);
 }
