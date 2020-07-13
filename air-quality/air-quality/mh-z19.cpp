@@ -1,35 +1,66 @@
 #include "mh-z19.h"
 
 
+#define REQUEST_LEN 9
+#define RESPONSE_LEN 9
+
+
+static byte GET_CO2_CMD[REQUEST_LEN] = {0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79};
+
+
+
 int MHZ19::get_co2(SoftwareSerial &serial_co2) {
-	byte cmd[9] = {0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79};
-	byte response[9];
+	byte response[RESPONSE_LEN];
 
-	serial_co2.write(cmd, 9);
+	/* Send "Gas Concentration" command */
+	serial_co2.write(GET_CO2_CMD, REQUEST_LEN);
 
-	while (serial_co2.available() > 0 && (unsigned char)serial_co2.peek() != 0xFF) {
+	/* Read response */
+	while (serial_co2.available() > 0 && (byte)serial_co2.peek() != 0xFF)
 		serial_co2.read();
-	}
 
-	memset(response, 0, 9);
-	serial_co2.readBytes(response, 9);
+	memset(response, 0, RESPONSE_LEN);
+	serial_co2.readBytes(response, RESPONSE_LEN);
 
+	/* Check command */
 	if (response[1] != 0x86)
 		return -1;
 
+	/* Calculate checksum */
+	byte checksum = 0;
+	for (int i = 1; i < 8; i++)
+		checksum += response[i];
+	checksum = 255 - checksum + 1;
 
-	byte crc = 0;
-	for (int i = 1; i < 8; i++) {
-		crc += response[i];
-	}
-	crc = 255 - crc + 1;
-
-	if (response[8] == crc) {
-		int responseHigh = (int) response[2];
-		int responseLow = (int) response[3];
-		int ppm = (256 * responseHigh) + responseLow;
-		return ppm;
-	} else {
+	/* Return result */
+	if (response[8] != checksum)
 		return -1;
+
+	int ppm = (int)response[2] * 256 + (int)response[3];
+
+	return ppm;
+}
+
+
+/**
+ * This is not fully correct. One every ~15 requests fails. This is probably
+ * caused by calling pulseIn only 10 times inestead of `while (th == 0)`.
+ */
+int MHZ19::get_co2_pwm(int pin) {
+	int MAX_NUM_ITER = 10;
+
+	unsigned long th;
+	for (int i = 0; i < MAX_NUM_ITER; i++) {
+		th = pulseIn(pin, HIGH, 1004000) / 1000;
+		Serial.println(th);
+		if (th > 0)
+			break;
 	}
+	if (th <= 0)
+		return -1;
+
+	unsigned long tl = 1004 - th;
+	int ppm = 5000 * (th - 2) / (th + tl - 4);
+
+	return ppm;
 }

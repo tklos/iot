@@ -6,6 +6,12 @@
 #include "metro.h"
 
 
+#define MHZ19_RX_PIN 13
+#define MHZ19_TX_PIN 15
+#define MHZ19_PWM_PIN 12
+
+
+
 MHZ19 mhz19;
 
 Display display;
@@ -20,7 +26,7 @@ Collect collect(
 	max_data_len
 );
 
-SoftwareSerial serial_mhz19(13, 15);
+SoftwareSerial serial_mhz19(MHZ19_RX_PIN, MHZ19_TX_PIN);
 
 Metro metro(interval_measurement);
 
@@ -52,22 +58,19 @@ void process_single_measurement() {
 
 	/* Get CO2 measurement */
 	int co2 = mhz19.get_co2(serial_mhz19);
+	int co2_pwm = mhz19.get_co2_pwm(MHZ19_PWM_PIN);
 	Serial.println(co2);
-// 	if (!ds18b20.is_correct_temperature(temp)) {
-// 		Serial.println("Invalid temperature");
-// 		return;
-// 	}
-//
-// 	String temp_s = String(temp, 2);
-// 	Serial.println(String() + "Temperature: " + temp_s);
+	Serial.println(co2_pwm);
 
 	String co2_s = String(co2);
+	String co2_pwm_s = String(co2_pwm);
+
 
 	/* Display data */
-	display.display_data(co2_s);
+	display.display_data(co2_s, co2_pwm_s);
 
 
 	/* Send to collect server */
-	String data = String("0,") + co2_s;
+	String data = co2_s + "," + co2_pwm_s;
 	collect.send_data(data);
 }
