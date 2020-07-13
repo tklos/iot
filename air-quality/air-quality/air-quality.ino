@@ -1,6 +1,7 @@
 #include "settings.h"
 #include "wifi.h"
 #include "mh-z19.h"
+#include "me-o2-d20.h"
 #include "display.h"
 #include "collect.h"
 #include "metro.h"
@@ -8,10 +9,12 @@
 
 #define MHZ19_RX_PIN 13
 #define MHZ19_TX_PIN 15
+#define MEO2D20_PIN A0
 
 
 
 MHZ19 mhz19;
+MEO2D20 device_o2(MEO2D20_PIN);
 
 Display display;
 
@@ -62,11 +65,19 @@ void process_single_measurement() {
 	String co2_s = (co2 == -1) ? String("null") : String(co2);
 
 
+	/* Get O2 measurement */
+	struct o2_measurement o2;
+	device_o2.get_o2(o2);
+	Serial.println(o2.raw);
+
+	String o2_s = (o2.raw < 10 || o2.raw >= 600) ? String("null") : String(o2.raw);
+
+
 	/* Display data */
-	display.display_data(co2_s);
+	display.display_data(co2_s, o2_s);
 
 
 	/* Send to collect server */
-	String data = co2_s;
+	String data = co2_s + "," + o2_s;
 	collect.send_data(data);
 }

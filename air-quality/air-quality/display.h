@@ -21,7 +21,7 @@ class Display {
 		display.setTextColor(WHITE);
 	}
 
-	void display_data(String co2);
+	void display_data(String co2, String o2);
 
 
 	private:
