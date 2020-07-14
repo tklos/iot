@@ -9,6 +9,7 @@ A NodeMCU-based air quality module. Measurement data are shown on the display an
 * NodeMCU v3
 * MH-Z19 CO<sub>2</sub> sensor
 * ME2-O2-Ф20 O<sub>2</sub> sensor
+* DS18B20 thermometer
 * 0.96'' I2C OLED display
 * 5V regulated power supply
 
@@ -29,6 +30,14 @@ ME2-O2-Ф20 pin | Connected to
 GND | GND
 VCC | 5V power supply
 SIG | NodeMCU pin A0
+
+
+DS18B20 pin | Connected to
+------------|:------------
+VDD | NodeMCU 3.3V pin or 5V power supply
+DATA | NodeMCU pin 12 (D6)
+DATA | Power supply (via 4.7kΩ resistor)
+GND | GND
 
 
 Display pin | Connected to

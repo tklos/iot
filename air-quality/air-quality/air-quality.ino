@@ -2,6 +2,7 @@
 #include "wifi.h"
 #include "mh-z19.h"
 #include "me-o2-d20.h"
+#include "ds18b20.h"
 #include "display.h"
 #include "collect.h"
 #include "metro.h"
@@ -10,11 +11,13 @@
 #define MHZ19_RX_PIN 13
 #define MHZ19_TX_PIN 15
 #define MEO2D20_PIN A0
+#define DS18B20_PIN 12
 
 
 
 MHZ19 mhz19;
 MEO2D20 device_o2(MEO2D20_PIN);
+DS18B20 thermometer(DS18B20_PIN);
 
 Display display;
 
@@ -73,11 +76,17 @@ void process_single_measurement() {
 	String o2_s = (o2.raw < 10 || o2.raw >= 600) ? String("null") : String(o2.raw);
 
 
+	/* Get temperature measurement */
+	float temperature = thermometer.get_temperature();
+	String temperature_s = (thermometer.is_correct_temperature(temperature)) ? String(temperature, 2) : String("null");
+	Serial.println(temperature_s);
+
+
 	/* Display data */
-	display.display_data(co2_s, o2_s);
+	display.display_data(co2_s, o2_s, temperature_s);
 
 
 	/* Send to collect server */
-	String data = co2_s + "," + o2_s;
+	String data = co2_s + "," + o2_s + "," + temperature_s;
 	collect.send_data(data);
 }
