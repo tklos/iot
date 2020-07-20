@@ -7,11 +7,17 @@
 class MHZ19 {
 	public:
 
-	int get_co2(SoftwareSerial &serial_co2);
+	MHZ19(int rx_pin, int tx_pin): serial(rx_pin, tx_pin) {
+	}
+
+	void begin();
+	int get_co2();
 	int get_co2_pwm(int pin);
 		
 
 	private:
+
+	SoftwareSerial serial;
 };
 
 

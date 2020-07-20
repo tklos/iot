@@ -9,18 +9,23 @@ static byte GET_CO2_CMD[REQUEST_LEN] = {0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00
 
 
 
-int MHZ19::get_co2(SoftwareSerial &serial_co2) {
+void MHZ19::begin() {
+	serial.begin(9600);
+}
+
+
+int MHZ19::get_co2() {
 	byte response[RESPONSE_LEN];
 
 	/* Send "Gas Concentration" command */
-	serial_co2.write(GET_CO2_CMD, REQUEST_LEN);
+	serial.write(GET_CO2_CMD, REQUEST_LEN);
 
 	/* Read response */
-	while (serial_co2.available() > 0 && (byte)serial_co2.peek() != 0xFF)
-		serial_co2.read();
+	while (serial.available() > 0 && (byte)serial.peek() != 0xFF)
+		serial.read();
 
 	memset(response, 0, RESPONSE_LEN);
-	serial_co2.readBytes(response, RESPONSE_LEN);
+	serial.readBytes(response, RESPONSE_LEN);
 
 	/* Check command */
 	if (response[1] != 0x86)

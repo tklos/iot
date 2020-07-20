@@ -4,6 +4,16 @@
 
 
 
+void Metro::start() {
+	previous_time = millis() - interval;
+}
+
+
+void Metro::reset() {
+	previous_time = millis() - interval;
+}
+
+
 bool Metro::check() {
 	unsigned long curr_time = millis();
 	unsigned long diff = curr_time - previous_time;
@@ -15,9 +25,4 @@ bool Metro::check() {
 	}
 
 	return false;
-}
-
-
-void Metro::reset() {
-	previous_time = millis() - interval;
 }

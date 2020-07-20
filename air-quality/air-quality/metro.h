@@ -14,9 +14,10 @@ class Metro {
 		previous_time = millis() - interval;
 	}
 
-	bool check();
-
+	void start();
 	void reset();
+
+	bool check();
 
 
 	private:
