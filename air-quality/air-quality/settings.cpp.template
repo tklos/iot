@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 #include "settings.h"
 
 
@@ -5,7 +7,11 @@
 const unsigned long interval_measurement = 60000;
 
 
-/* CO2 */
+/* Devices */
+const int meo2d0_pin = A0;
+const int ds18b20_pin = 12;
+const int mhz19_rx_pin = 13;
+const int mhz19_tx_pin = 15;
 
 
 /* WiFi */

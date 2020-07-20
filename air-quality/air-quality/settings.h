@@ -2,9 +2,15 @@
 #define __settings_h__
 
 
-/* Thermometer */
-extern const int thermometer_pin;
+/* Measurement */
 extern const unsigned long interval_measurement;
+
+
+/* Devices */
+extern const int meo2d0_pin;
+extern const int ds18b20_pin;
+extern const int mhz19_rx_pin;
+extern const int mhz19_tx_pin;
 
 
 /* WiFi */

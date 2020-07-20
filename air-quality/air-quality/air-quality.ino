@@ -8,16 +8,10 @@
 #include "metro.h"
 
 
-#define MHZ19_RX_PIN 13
-#define MHZ19_TX_PIN 15
-#define MEO2D20_PIN A0
-#define DS18B20_PIN 12
 
-
-
-MHZ19 mhz19;
-MEO2D20 device_o2(MEO2D20_PIN);
-DS18B20 thermometer(DS18B20_PIN);
+MHZ19 device_co2;
+MEO2D20 device_o2(meo2d0_pin);
+DS18B20 thermometer(ds18b20_pin);
 
 Display display;
 
@@ -31,7 +25,7 @@ Collect collect(
 	max_data_len
 );
 
-SoftwareSerial serial_mhz19(MHZ19_RX_PIN, MHZ19_TX_PIN);
+SoftwareSerial serial_co2(mhz19_rx_pin, mhz19_tx_pin);
 
 Metro metro(interval_measurement);
 
@@ -39,7 +33,7 @@ Metro metro(interval_measurement);
 
 void setup() {
 	Serial.begin(115200);
-	serial_mhz19.begin(9600);
+	serial_co2.begin(9600);
 
  	connect_to_wifi(wifi_ssid, wifi_password);
 
@@ -62,7 +56,7 @@ void process_single_measurement() {
 
 
 	/* Get CO2 measurement */
-	int co2 = mhz19.get_co2(serial_mhz19);
+	int co2 = device_co2.get_co2(serial_co2);
 	Serial.println(co2);
 
 	String co2_s = (co2 == -1) ? String("null") : String(co2);
