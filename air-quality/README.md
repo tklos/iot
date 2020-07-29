@@ -9,7 +9,7 @@ A NodeMCU-based air quality module. Measurement data are shown on the display an
 * NodeMCU v3
 * MH-Z19 CO<sub>2</sub> sensor
 * ME2-O2-Ф20 O<sub>2</sub> sensor
-* DS18B20 thermometer
+* BME280 temperature, humidity and pressure sensor (I2C 5V version)
 * 0.96'' I2C OLED display
 * 5V regulated power supply
 
@@ -32,12 +32,12 @@ VCC | 5V power supply
 SIG | NodeMCU pin A0
 
 
-DS18B20 pin | Connected to
+BME280 pin | Connected to
 ------------|:------------
-VDD | NodeMCU 3.3V pin or 5V power supply
-DATA | NodeMCU pin 12 (D6)
-DATA | Power supply (via 4.7kΩ resistor)
+VIN | 5V power supply
 GND | GND
+SCL | NodeMCU pin 5 (D1, SCL)
+SDA | NodeMCU pin 4 (D2, SDA)
 
 
 Display pin | Connected to
@@ -51,6 +51,7 @@ SDA | NodeMCU pin 4 (D2, SDA)
 
 ## Installation
 
+* Install libraries listed in `libraries.txt`
 * Create `air-quality/settings.cpp` based on its `.template` version
 * Upload sketch
 

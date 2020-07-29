@@ -8,10 +8,9 @@ const unsigned long interval_measurement = 60000;
 
 
 /* Devices */
-const int meo2d0_pin = A0;
-const int ds18b20_pin = 12;
 const int mhz19_rx_pin = 13;
 const int mhz19_tx_pin = 15;
+const int meo2d0_pin = A0;
 
 
 /* WiFi */
@@ -26,4 +25,3 @@ const char *collect_host =
 const char *collect_api_key =
 const char *collect_measurement_resource = "/api/measurements/";
 const unsigned long collect_response_timeout = 10000;
-const int max_data_len = 30;
