@@ -20,7 +20,7 @@ const char *wifi_password =
 
 /* Collect server */
 const char *collect_server =
-int collect_port = 443;
+const int collect_port = 443;
 const char *collect_host =
 const char *collect_api_key =
 const char *collect_measurement_resource = "/api/measurements/";
