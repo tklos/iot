@@ -1,0 +1,12 @@
+
+https://github.com/Makerfabs/Maduino-Zero-A9G
+    Maduino-Zero-A9G
+
+https://www.makerfabs.com/maduino-zero-a9g.html
+    A9G_Arduino_Demo_Code
+
+https://www.makerfabs.com/wiki/index.php?title=Maduino_Zero_A9G_v3.3
+    Gprs_series_module_at_instruction_set_v1.0(A9_A9G).pdf
+
+Blog posts:
+    https://how2electronics.com/internet-with-a9g-low-power-gprsgps-module-arduino/
