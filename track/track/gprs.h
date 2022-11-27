@@ -4,8 +4,7 @@
 #include <Arduino.h>
 
 
-#define BUFLEN 256
-//extern static char *BUF;
+#define BUFLEN 255
 
 #define TIMEOUT_CMD_DEFAULT 5000
 
@@ -14,19 +13,20 @@
 
 class GPRS {
 public:
-	GPRS(HardwareSerial &serial, unsigned int baud) : serial(serial) {
-		this->baud = baud;
-	}
+    GPRS(HardwareSerial &serial, unsigned int baud) : serial(serial) {
+        this->baud = baud;
+    }
 
-	void begin();
+    void begin();
 
-	void send_cmd(const char *cmd);
-	char *send_cmd_return(const char *cmd, unsigned int timeout=TIMEOUT_CMD_DEFAULT);
-	bool send_cmd_check_ok(const char *cmd, unsigned int timeout=TIMEOUT_CMD_DEFAULT);
+    void send_cmd(const char *cmd);
+    char *send_cmd_return(const char *cmd, unsigned long wait_time=0, unsigned int timeout=TIMEOUT_CMD_DEFAULT);
+    bool send_cmd_check_ok(const char *cmd, unsigned long wait_time=0, unsigned int timeout=TIMEOUT_CMD_DEFAULT);
+    bool send_cmd_check_ok_anywhere(const char *cmd, unsigned long wait_time=0, unsigned int timeout=TIMEOUT_CMD_DEFAULT);
 
 private:
-	HardwareSerial &serial;
-	long baud;
+    HardwareSerial &serial;
+    long baud;
 
 };
 
