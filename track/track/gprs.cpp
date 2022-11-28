@@ -9,6 +9,16 @@ void GPRS::begin() {
 }
 
 
+bool GPRS::check_ok(const char *buf) {
+    return !strncmp(buf, "OK", 2);
+}
+
+
+bool GPRS::check_ok_anywhere(const char *buf) {
+    return check_ok(buf) || strstr(buf, "\x0D\x0AOK");
+}
+
+
 void GPRS::send_cmd(const char *cmd) {
     /* Clear response buffer before sending new command */
     while (serial.available())
@@ -76,7 +86,7 @@ bool GPRS::send_cmd_check_ok(const char *cmd, unsigned long wait_time, unsigned 
     if (!buf)
         return false;
 
-    return !strncmp(buf, "OK", 2);
+    return check_ok(buf);
 }
 
 
@@ -85,5 +95,63 @@ bool GPRS::send_cmd_check_ok_anywhere(const char *cmd, unsigned long wait_time, 
     if (!buf)
         return false;
 
-    return !strncmp(buf, "OK", 2) || strstr(buf, "\x0D\x0AOK");
+    return check_ok_anywhere(buf);
+}
+
+
+int GPRS::num_smses() {
+    char *ret = send_cmd_return("AT+CPMS?");
+    if (!check_ok_anywhere(ret))
+        return -1;
+
+    char *tok = strtok(ret, ",");
+    if (!tok)
+        return -1;
+
+    tok = strtok(NULL, ",");
+    return atoi(tok);
+}
+
+
+char *GPRS::read_sms() {
+    /* Output of AT+CMGR consists of:
+     * header \13\10
+     * text (possibly with \10)
+     * \13\10\13\10
+     */
+    char *ret = send_cmd_return("AT+CMGR=1");
+    if (!ret)
+        return NULL;
+
+    char *tok = strstr(ret, "\xD\xA");
+    if (!tok)
+        return NULL;
+    tok += 2;
+
+    char *end = strstr(tok, "\xD\xA");
+    if (!end)
+        return NULL;
+    *end = '\0';
+
+    return tok;
+}
+
+
+bool GPRS::delete_sms() {
+    bool ret = send_cmd_check_ok("AT+CMGD=1");
+    return ret;
+}
+
+
+String GPRS::current_time() {
+    char *ret = send_cmd_return("AT+CCLK?");
+    if (!ret)
+        return "(Err)";
+
+    String s = ret;
+
+    if (s.length() < 30 || !s.startsWith("+CCLK: "))
+        return "(Err)";
+
+    return s.substring(8, 28);
 }

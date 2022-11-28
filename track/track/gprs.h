@@ -19,10 +19,20 @@ public:
 
     void begin();
 
+    bool check_ok(const char *buf);
+    bool check_ok_anywhere(const char *buf);
+
     void send_cmd(const char *cmd);
     char *send_cmd_return(const char *cmd, unsigned long wait_time=0, unsigned int timeout=TIMEOUT_CMD_DEFAULT);
     bool send_cmd_check_ok(const char *cmd, unsigned long wait_time=0, unsigned int timeout=TIMEOUT_CMD_DEFAULT);
     bool send_cmd_check_ok_anywhere(const char *cmd, unsigned long wait_time=0, unsigned int timeout=TIMEOUT_CMD_DEFAULT);
+
+    int num_smses();
+    char *read_sms();
+    bool delete_sms();
+
+    String current_time();
+
 
 private:
     HardwareSerial &serial;
