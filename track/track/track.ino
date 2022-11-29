@@ -2,17 +2,22 @@
 
 #include "settings.h"
 #include "gprs.h"
+#include "sd.h"
 #include "metro.h"
 
 
-int PWR_KEY = 9;
-int RST_KEY = 6;
-int LOW_PWR_KEY = 5;
+const int PWR_KEY = 9;
+const int RST_KEY = 6;
+const int LOW_PWR_KEY = 5;
+
+const int SD_CS = 4;
 
 HardwareSerial &serial = SerialUSB;
 HardwareSerial &serial_gprs = Serial1;
 
 GPRS gprs(serial_gprs, baud_gprs);
+
+SdFile sdlog;
 
 Metro metro_sms(INTERVAL_SMS);
 
@@ -94,10 +99,34 @@ void setup() {
     };
     serial.println();
 
-
     serial.println("Connected");
 
+
+    /* SD card */
+    serial.println("Initialise SD card");
+    if (!sd.begin(SD_CS, SPI_HALF_SPEED))
+        setuperror();
+
+    String current_date = gprs.current_date();
+    if (!create_log_dir(log_dir)) {
+        serial.println("Can't create log dir");
+        setuperror();
+    }
+
+    String filename = get_log_filename(log_dir, current_date);
+    serial.println(String("Creating log file: \"") + filename + "\"");
+    if (filename == "")
+        setuperror();
+
+    if (!create_log_file(sdlog, filename))
+        setuperror();
+
+
+    /* Metro */
     metro_sms.start();
+
+
+    serial.println("Setup finished");
 }
 
 
@@ -132,6 +161,11 @@ String current_time_millis() {
 }
 
 
+String get_log_timestamp() {
+    return current_time_millis() + "  " + gprs.current_time() + "  ";
+}
+
+
 void check_sms() {
     int num_smses = gprs.num_smses();
     serial.println(String("Read ") + num_smses + " SMSes");
@@ -143,6 +177,7 @@ void check_sms() {
 
 
 void process_sms() {
+    sdlog.println(get_log_timestamp() + "Received SMS"); sdlog.sync();
     char *msg_s = gprs.read_sms();
     if (!msg_s) {
         serial.println("Can't read SMS");
@@ -153,10 +188,11 @@ void process_sms() {
     msg.toLowerCase();
 
     if (msg.startsWith("status")) {
-        String s = current_time_millis() + "  " + gprs.current_time();
-        serial.println(s);
+        sdlog.println(get_log_timestamp() + "Processing status"); sdlog.sync();
+        serial.println(get_log_timestamp());
 
     } else {
+        sdlog.println(get_log_timestamp() + String("Can't understand SMS message \"") + msg + "\""); sdlog.sync();
         serial.println(String("Can't understand SMS message \"") + msg + "\"");
     }
 

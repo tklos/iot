@@ -143,15 +143,29 @@ bool GPRS::delete_sms() {
 }
 
 
-String GPRS::current_time() {
+String GPRS::current_date() {
     char *ret = send_cmd_return("AT+CCLK?");
     if (!ret)
-        return "(Err)";
+        return "000000";
 
     String s = ret;
 
     if (s.length() < 30 || !s.startsWith("+CCLK: "))
-        return "(Err)";
+        return "000000";
+
+    return s.substring(8, 10) + s.substring(11, 13) + s.substring(14, 16);
+}
+
+
+String GPRS::current_time() {
+    char *ret = send_cmd_return("AT+CCLK?");
+    if (!ret)
+        return "      ????????      ";
+
+    String s = ret;
+
+    if (s.length() < 30 || !s.startsWith("+CCLK: "))
+        return "      ????????      ";
 
     return s.substring(8, 28);
 }

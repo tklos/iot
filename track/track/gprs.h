@@ -31,6 +31,7 @@ public:
     char *read_sms();
     bool delete_sms();
 
+    String current_date();
     String current_time();
 
 
