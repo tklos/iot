@@ -17,6 +17,8 @@ HardwareSerial &serial_gprs = Serial1;
 
 GPRS gprs(serial_gprs, baud_gprs);
 
+bool gps_on = false;
+
 SdFile sdlog;
 
 Metro metro_sms(INTERVAL_SMS);
@@ -165,6 +167,24 @@ String get_log_timestamp() {
     return current_time_millis() + "  " + gprs.current_time() + "  ";
 }
 
+String empty_log_timestamp = String("                                ");
+
+
+void log(String &msg) {
+    /* Print `msg` to both serial and sdlog. Attach timestamp to log. */
+    serial.println(msg);
+
+    msg.replace("\n", String("\n") + empty_log_timestamp);
+    sdlog.println(get_log_timestamp() + msg);
+    sdlog.sync();
+}
+
+
+void log(const char *msg) {
+    String msg_ = msg;
+    log(msg_);
+}
+
 
 void check_sms() {
     int num_smses = gprs.num_smses();
@@ -177,7 +197,7 @@ void check_sms() {
 
 
 void process_sms() {
-    sdlog.println(get_log_timestamp() + "Received SMS"); sdlog.sync();
+    log("Received SMS");
     char *msg_s = gprs.read_sms();
     if (!msg_s) {
         serial.println("Can't read SMS");
@@ -188,8 +208,33 @@ void process_sms() {
     msg.toLowerCase();
 
     if (msg.startsWith("status")) {
-        sdlog.println(get_log_timestamp() + "Processing status"); sdlog.sync();
-        serial.println(get_log_timestamp());
+        msg = String("Processing status\nGPS: ") + gps_on;
+        log(msg);
+
+    } else if (msg.startsWith("gpson")) {
+        msg = String("Processing GPS on");
+        log(msg);
+
+        if (gps_on)
+            msg = String("Already on, ignoring..");
+        else {
+            bool ret = gprs.gps_on();
+            gps_on = true;
+            msg = String("GPS now on");
+        }
+        log(msg);
+
+    } else if (msg.startsWith("gpsoff")) {
+        msg = String("Processing GPS off");
+        log(msg);
+
+        if (gps_on) {
+            bool ret = gprs.gps_off();
+            gps_on = false;
+            msg = String("GPS now off");
+        } else
+            msg = String("Already off, ignoring..");
+        log(msg);
 
     } else {
         sdlog.println(get_log_timestamp() + String("Can't understand SMS message \"") + msg + "\""); sdlog.sync();

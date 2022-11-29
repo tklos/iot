@@ -169,3 +169,15 @@ String GPRS::current_time() {
 
     return s.substring(8, 28);
 }
+
+
+bool GPRS::gps_on() {
+    bool ret = send_cmd_check_ok("AT+GPS=1");
+    return ret;
+}
+
+
+bool GPRS::gps_off() {
+    bool ret = send_cmd_check_ok("AT+GPS=0");
+    return ret;
+}

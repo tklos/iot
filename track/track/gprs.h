@@ -34,6 +34,9 @@ public:
     String current_date();
     String current_time();
 
+    bool gps_on();
+    bool gps_off();
+
 
 private:
     HardwareSerial &serial;
