@@ -214,6 +214,52 @@ void check_sms() {
 }
 
 
+void process_cmd_status() {
+    String msg = "Processing status";
+    msg += "\nGPS: " + gps_on;
+
+    log(msg);
+}
+
+
+void process_cmd_gps_on() {
+    log("Processing GPS on");
+
+    if (gps_on) {
+        log("Already on, ignoring..");
+        return;
+    }
+
+    bool ret = gprs.gps_on();
+    if (!ret) {
+        log("Switching GPS on failed");
+        return;
+    }
+
+    gps_on = true;
+    log("GPS now on");
+}
+
+
+void process_cmd_gps_off() {
+    log("Processing GPS off");
+
+    if (!gps_on) {
+        log("Already off, ignoring..");
+        return;
+    }
+
+    bool ret = gprs.gps_off();
+    if (!ret) {
+        log("Switching GPS off failed");
+        return;
+    }
+
+    gps_on = false;
+    log("GPS now off");
+}
+
+
 void process_sms() {
     log("Received SMS");
     char *msg_s = gprs.read_sms();
@@ -225,31 +271,13 @@ void process_sms() {
     String msg = msg_s;
     msg.toLowerCase();
 
-    if (msg.startsWith("status")) {
-        log(String("Processing status\nGPS: ") + gps_on);
-
-    } else if (msg.startsWith("gpson")) {
-        log("Processing GPS on");
-
-        if (gps_on)
-            log("Already on, ignoring..");
-        else {
-            bool ret = gprs.gps_on();
-            gps_on = true;
-            log("GPS now on");
-        }
-
-    } else if (msg.startsWith("gpsoff")) {
-        log("Processing GPS off");
-
-        if (gps_on) {
-            bool ret = gprs.gps_off();
-            gps_on = false;
-            log("GPS now off");
-        } else
-            log("Already off, ignoring..");
-
-    } else
+    if (msg.startsWith("status"))
+        process_cmd_status();
+    else if (msg.startsWith("gpson"))
+        process_cmd_gps_on();
+    else if (msg.startsWith("gpsoff"))
+        process_cmd_gps_off();
+    else
         log(String("Can't understand SMS message \"") + msg + "\"");
 
     gprs.delete_sms();
