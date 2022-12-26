@@ -167,15 +167,22 @@ String get_log_timestamp() {
     return current_time_millis() + "  " + gprs.current_time() + "  ";
 }
 
-String empty_log_timestamp = String("                                ");
+const String empty_log_timestamp = "                                ";
 
 
-void log(String &msg) {
-    /* Print `msg` to both serial and sdlog. Attach timestamp to log. */
+String attach_timestamp_to_msg(const String &msg) {
+    String msg_(msg);
+    msg_.replace("\n", String("\n") + empty_log_timestamp);
+    return get_log_timestamp() + msg_;
+}
+
+
+void log(const String &msg) {
+    /* Print `msg` to both serial and sdlog. Attach timestamp. */
+    String msg_ = attach_timestamp_to_msg(msg);
+
     serial.println(msg);
-
-    msg.replace("\n", String("\n") + empty_log_timestamp);
-    sdlog.println(get_log_timestamp() + msg);
+    sdlog.println(msg);
     sdlog.sync();
 }
 
@@ -186,9 +193,20 @@ void log(const char *msg) {
 }
 
 
+void log_serial(const String &msg) {
+    serial.println(attach_timestamp_to_msg(msg));
+}
+
+
+void log_serial(const char *msg) {
+    String msg_ = msg;
+    log_serial(msg_);
+}
+
+
 void check_sms() {
     int num_smses = gprs.num_smses();
-    serial.println(String("Read ") + num_smses + " SMSes");
+    log_serial(String("Read ") + num_smses + " SMSes");
     if (num_smses <= 0)
         return;
 
@@ -200,7 +218,7 @@ void process_sms() {
     log("Received SMS");
     char *msg_s = gprs.read_sms();
     if (!msg_s) {
-        serial.println("Can't read SMS");
+        log("Can't read SMS");
         return;
     }
 
@@ -208,38 +226,31 @@ void process_sms() {
     msg.toLowerCase();
 
     if (msg.startsWith("status")) {
-        msg = String("Processing status\nGPS: ") + gps_on;
-        log(msg);
+        log(String("Processing status\nGPS: ") + gps_on);
 
     } else if (msg.startsWith("gpson")) {
-        msg = String("Processing GPS on");
-        log(msg);
+        log("Processing GPS on");
 
         if (gps_on)
-            msg = String("Already on, ignoring..");
+            log("Already on, ignoring..");
         else {
             bool ret = gprs.gps_on();
             gps_on = true;
-            msg = String("GPS now on");
+            log("GPS now on");
         }
-        log(msg);
 
     } else if (msg.startsWith("gpsoff")) {
-        msg = String("Processing GPS off");
-        log(msg);
+        log("Processing GPS off");
 
         if (gps_on) {
             bool ret = gprs.gps_off();
             gps_on = false;
-            msg = String("GPS now off");
+            log("GPS now off");
         } else
-            msg = String("Already off, ignoring..");
-        log(msg);
+            log("Already off, ignoring..");
 
-    } else {
-        sdlog.println(get_log_timestamp() + String("Can't understand SMS message \"") + msg + "\""); sdlog.sync();
-        serial.println(String("Can't understand SMS message \"") + msg + "\"");
-    }
+    } else
+        log(String("Can't understand SMS message \"") + msg + "\"");
 
     gprs.delete_sms();
 }
