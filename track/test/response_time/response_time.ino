@@ -48,10 +48,15 @@ void loop() {
 	while (Serial1.available() > 0) {
         unsigned long time = micros() - start_time;
         int c = Serial1.read();
-        if (c == 10 || c == 13)
+        if (c == 10)
             response += "$";
+        else if (c == 13)
+            response += "%";
         else
             response += (char)c;
-        SerialUSB.println(String("") + response + " " + (float)time/1000);
+
+        SerialUSB.print(response);
+        SerialUSB.print(" ");
+        SerialUSB.println((float)time/1000);
     }
 }

@@ -9,6 +9,13 @@ const long baud_gprs = 115200;
 
 const unsigned long INTERVAL_SMS = 5000;
 
+extern const char *apn = "internet";
+
+
+/* Collect */
+const char *collect_url = "http{,s}://(server)/api/measurements/";
+const char *api_key = "(api-key)";
+
 
 /* SD */
 const String log_dir = "log";

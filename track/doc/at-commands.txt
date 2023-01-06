@@ -1,4 +1,11 @@
 
+* General
+ATEx
+    Switch echo on/off
+        0: off
+        1: on
+
+
 * GPRS
 AT+CREG=0
     Disable network registration unsolicited result code
@@ -14,7 +21,14 @@ AT+GPS=x
 AT+GPSRD=x
     Read NEMA records every x seconds; 0 to switch off
 AT+LOCATION=2
-    Get GPS location
+    Get GPS location.
+    Returns:
+        +LOCATION: GPS NOT FIX NOW
+        +CME ERROR: 52
+            If error
+        lat,lon
+        OK
+            With 6 decimal points
 
 
 * SMS
@@ -36,4 +50,21 @@ AT+CMGD=x
     Delete SMS x
 AT+CMGD=1,4
     Delete all messages
+
+
+* HTTP
+AT+CGATT=x
+    Activate/Deactivate Packet Data System
+        0: deactivate
+        1: activate
+AT+CGDCONT=1,"IP","(apn)"
+    Setup Packet Data Protocol
+AT+CGACT=x
+    Activate/Deactivate Packet Data Protocol
+        0: deactivate
+        1: activate
+AT+HTTPPOST="(url)","(content-type)","(data)"
+    Send HTTP POST request
+        content-type
+            e.g. application/x-www-form-urlencoded
 

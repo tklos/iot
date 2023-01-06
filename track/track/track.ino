@@ -17,11 +17,17 @@ HardwareSerial &serial_gprs = Serial1;
 
 GPRS gprs(serial_gprs, baud_gprs);
 
-bool gps_on = false;
-
 SdFile sdlog;
 
 Metro metro_sms(INTERVAL_SMS);
+
+
+#define BUFLEN 255
+char buf[BUFLEN];
+
+
+/* Status */
+bool gps_on = false;
 
 
 
@@ -43,7 +49,7 @@ void setup() {
     digitalWrite(PWR_KEY, LOW);
     delay(3000);
     digitalWrite(PWR_KEY, HIGH);
-    delay(3000);
+    delay(5000);
 
     serial.begin(baud_monitor);
     gprs.begin();
@@ -102,6 +108,24 @@ void setup() {
     serial.println();
 
     serial.println("Connected");
+
+
+    /* Data */
+    serial.println("Activate Packet Data System");
+    ret = gprs.send_cmd_check_ok_anywhere("AT+CGATT=1");
+    if (!ret)
+        setuperror();
+
+    serial.println("Setup Packet Data Protocol");
+    String cmd = String("") + "AT+CGDCONT=1,\"IP\",\"" + apn + "\"";
+    ret = gprs.send_cmd_check_ok(cmd.c_str());
+    if (!ret)
+        setuperror();
+
+    serial.println("Activate Packet Data Protocol");
+    ret = gprs.send_cmd_check_ok("AT+CGACT=1");
+    if (!ret)
+        setuperror();
 
 
     /* SD card */
@@ -181,8 +205,8 @@ void log(const String &msg) {
     /* Print `msg` to both serial and sdlog. Attach timestamp. */
     String msg_ = attach_timestamp_to_msg(msg);
 
-    serial.println(msg);
-    sdlog.println(msg);
+    serial.println(msg_);
+    sdlog.println(msg_);
     sdlog.sync();
 }
 
@@ -216,7 +240,7 @@ void check_sms() {
 
 void process_cmd_status() {
     String msg = "Processing status";
-    msg += "\nGPS: " + gps_on;
+    msg += String("\n") + "GPS: " + gps_on;
 
     log(msg);
 }
@@ -260,6 +284,39 @@ void process_cmd_gps_off() {
 }
 
 
+void process_cmd_gps_loc() {
+    log("Processing GPS loc");
+
+    if (!gps_on) {
+        /* Try switching GPS on */
+        log("GPS off, switching on..");
+        process_cmd_gps_on();
+        if (!gps_on) {
+            log("Can't switch GPS on, quitting..");
+            return;
+        }
+    }
+
+    /* Get GPS location */
+    char *ret = gprs.get_location();
+    if (!ret) {
+        log("Can't get GPS location, quitting..");
+        return;
+    }
+    strncpy(buf, ret, BUFLEN);
+    log(String("") + "Got GPS location: " + buf);
+
+    /* Send GPS location */
+    String data = String("") + "%5B" + buf + "%5D";
+    bool ret2 = gprs.send_post(collect_url, api_key, data.c_str());
+    if (!ret2) {
+        log("Sending GPS location failed, quitting..");
+        return;
+    }
+    log("GPS location sent successfully");
+}
+
+
 void process_sms() {
     log("Received SMS");
     char *msg_s = gprs.read_sms();
@@ -277,6 +334,8 @@ void process_sms() {
         process_cmd_gps_on();
     else if (msg.startsWith("gpsoff"))
         process_cmd_gps_off();
+    else if (msg.startsWith("gpsloc"))
+        process_cmd_gps_loc();
     else
         log(String("Can't understand SMS message \"") + msg + "\"");
 
