@@ -2,7 +2,9 @@
 
 #include "settings.h"
 #include "gprs.h"
+#include "display.h"
 #include "sd.h"
+#include "log.h"
 #include "metro.h"
 
 
@@ -16,9 +18,10 @@ HardwareSerial &serial = SerialUSB;
 HardwareSerial &serial_gprs = Serial1;
 
 GPRS gprs(serial_gprs, baud_gprs);
-
+Display display;
 SdFile sdlog;
 
+Log logger(serial, display, sdlog, gprs);
 Metro metro_sms(INTERVAL_SMS);
 
 
@@ -32,7 +35,7 @@ bool gps_on = false;
 
 
 void setuperror() {
-    serial.println("Error");
+    logger.log("Error", LOG_ALL, false);
     while (true) {
     }
 }
@@ -53,47 +56,50 @@ void setup() {
 
     serial.begin(baud_monitor);
     gprs.begin();
+    if (!display.begin())
+        logger.log("Display initialization failed", LOG_SERIAL, false);
 
-    serial.println("Ready");
+    logger.log("Initialisation finished, starting setup..", LOG_SERIAL_DISPLAY, false);
 
 
     /* GPRS */
-    serial.println("Switch off echo");
+    logger.log("Switch off echo", LOG_SERIAL_DISPLAY, false);
     bool ret = gprs.send_cmd_check_ok_anywhere("ATE0", 40);
     if (!ret)
         setuperror();
 
-    serial.println("AT");
+    logger.log("AT", LOG_SERIAL_DISPLAY, false);
     ret = gprs.send_cmd_check_ok("AT");
     if (!ret)
         setuperror();
 
-    serial.println("Disable unsolicited network registration messages");
+    logger.log("Disable unsolicited network registration messages", LOG_SERIAL_DISPLAY, false);
     ret = gprs.send_cmd_check_ok("AT+CREG=0");
     if (!ret)
         setuperror();
 
-    serial.println("Switch off new SMS indications");
+    logger.log("Switch off new SMS indications", LOG_SERIAL_DISPLAY, false);
     ret = gprs.send_cmd_check_ok("AT+CNMI=0,0,0,0,0");
     if (!ret)
         setuperror();
 
-    serial.println("Switch off indications");
+    logger.log("Switch off indications", LOG_SERIAL_DISPLAY, false);
     ret = gprs.send_cmd_check_ok("AT+CMER=3,0,0,0");
     if (!ret)
         setuperror();
 
-    serial.println("Set SMS format to text");
+    logger.log("Set SMS format to text", LOG_SERIAL_DISPLAY, false);
     ret = gprs.send_cmd_check_ok("AT+CMGF=1");
     if (!ret)
         setuperror();
 
-    serial.println("Set SMS storage");
+    logger.log("Set SMS storage", LOG_SERIAL_DISPLAY, false);
     ret = gprs.send_cmd_check_ok_anywhere("AT+CPMS=\"SM\",\"SM\",\"SM\"");
     if (!ret)
         setuperror();
 
     serial.print("Wait for network registration ");
+    logger.log("Wait for network registration", LOG_DISPLAY, false);
     while (true) {
         char *ret = gprs.send_cmd_return("AT+CREG?");
         if (
@@ -107,52 +113,55 @@ void setup() {
     };
     serial.println();
 
-    serial.println("Connected");
+    logger.log("Connected", LOG_SERIAL_DISPLAY, false);
 
 
     /* Data */
-    serial.println("Activate Packet Data System");
+    logger.log("Activate Packet Data System", LOG_SERIAL_DISPLAY, false);
     ret = gprs.send_cmd_check_ok_anywhere("AT+CGATT=1");
     if (!ret)
         setuperror();
 
-    serial.println("Setup Packet Data Protocol");
+    logger.log("Setup Packet Data Protocol", LOG_SERIAL_DISPLAY, false);
     String cmd = String("") + "AT+CGDCONT=1,\"IP\",\"" + apn + "\"";
     ret = gprs.send_cmd_check_ok(cmd.c_str());
     if (!ret)
         setuperror();
 
-    serial.println("Activate Packet Data Protocol");
+    logger.log("Activate Packet Data Protocol", LOG_SERIAL_DISPLAY, false);
     ret = gprs.send_cmd_check_ok("AT+CGACT=1");
     if (!ret)
         setuperror();
 
 
     /* SD card */
-    serial.println("Initialise SD card");
+    logger.log("Initialise SD card", LOG_SERIAL_DISPLAY, false);
     if (!sd.begin(SD_CS, SPI_HALF_SPEED))
         setuperror();
 
     String current_date = gprs.current_date();
     if (!create_log_dir(log_dir)) {
-        serial.println("Can't create log dir");
+        logger.log("Can't create log dir", LOG_SERIAL_DISPLAY, false);
         setuperror();
     }
 
     String filename = get_log_filename(log_dir, current_date);
-    serial.println(String("Creating log file: \"") + filename + "\"");
-    if (filename == "")
+    logger.log(String("") + "Creating log file: \"" + filename + "\"", LOG_SERIAL_DISPLAY, false);
+    if (filename == "") {
+        logger.log("Empty log filename", LOG_SERIAL_DISPLAY, false);
         setuperror();
-
-    if (!create_log_file(sdlog, filename))
+    }
+    if (!create_log_file(sdlog, filename)) {
+        logger.log(String("") + "Can't create log file \"" + filename + "\"", LOG_SERIAL_DISPLAY, false);
         setuperror();
+    }
 
 
     /* Metro */
     metro_sms.start();
 
 
-    serial.println("Setup finished");
+    logger.log("Setup finished", LOG_SERIAL_DISPLAY, false);
 }
 
 
@@ -173,64 +182,9 @@ void loop() {
 
 
 
-String current_time_millis() {
-    unsigned long milli = millis() / 1000;
-    int second = milli % 60;
-    milli /= 60;
-    int minute = milli % 60;
-    milli /= 60;
-    int hour = milli;
-
-    char buf[15];
-    sprintf(buf, "%02d:%02d:%02d", hour, minute, second);
-    return buf;
-}
-
-
-String get_log_timestamp() {
-    return current_time_millis() + "  " + gprs.current_time() + "  ";
-}
-
-const String empty_log_timestamp = "                                ";
-
-
-String attach_timestamp_to_msg(const String &msg) {
-    String msg_(msg);
-    msg_.replace("\n", String("\n") + empty_log_timestamp);
-    return get_log_timestamp() + msg_;
-}
-
-
-void log(const String &msg) {
-    /* Print `msg` to both serial and sdlog. Attach timestamp. */
-    String msg_ = attach_timestamp_to_msg(msg);
-
-    serial.println(msg_);
-    sdlog.println(msg_);
-    sdlog.sync();
-}
-
-
-void log(const char *msg) {
-    String msg_ = msg;
-    log(msg_);
-}
-
-
-void log_serial(const String &msg) {
-    serial.println(attach_timestamp_to_msg(msg));
-}
-
-
-void log_serial(const char *msg) {
-    String msg_ = msg;
-    log_serial(msg_);
-}
-
-
 void check_sms() {
     int num_smses = gprs.num_smses();
-    log_serial(String("Read ") + num_smses + " SMSes");
+    logger.log(String("") + "Read " + num_smses + " SMSes", LOG_SERIAL);
     if (num_smses <= 0)
         return;
 
@@ -242,57 +196,57 @@ void process_cmd_status() {
     String msg = "Processing status";
     msg += String("\n") + "GPS: " + gps_on;
 
-    log(msg);
+    logger.log(msg);
 }
 
 
 void process_cmd_gps_on() {
-    log("Processing GPS on");
+    logger.log("Processing GPS on");
 
     if (gps_on) {
-        log("Already on, ignoring..");
+        logger.log("Already on, ignoring..");
         return;
     }
 
     bool ret = gprs.gps_on();
     if (!ret) {
-        log("Switching GPS on failed");
+        logger.log("Switching GPS on failed");
         return;
     }
 
     gps_on = true;
-    log("GPS now on");
+    logger.log("GPS now on");
 }
 
 
 void process_cmd_gps_off() {
-    log("Processing GPS off");
+    logger.log("Processing GPS off");
 
     if (!gps_on) {
-        log("Already off, ignoring..");
+        logger.log("Already off, ignoring..");
         return;
     }
 
     bool ret = gprs.gps_off();
     if (!ret) {
-        log("Switching GPS off failed");
+        logger.log("Switching GPS off failed");
         return;
     }
 
     gps_on = false;
-    log("GPS now off");
+    logger.log("GPS now off");
 }
 
 
 void process_cmd_gps_loc() {
-    log("Processing GPS loc");
+    logger.log("Processing GPS loc");
 
     if (!gps_on) {
         /* Try switching GPS on */
-        log("GPS off, switching on..");
+        logger.log("GPS off, switching on..");
         process_cmd_gps_on();
         if (!gps_on) {
-            log("Can't switch GPS on, quitting..");
+            logger.log("Can't switch GPS on, quitting..");
             return;
         }
     }
@@ -300,28 +254,28 @@ void process_cmd_gps_loc() {
     /* Get GPS location */
     char *ret = gprs.get_location();
     if (!ret) {
-        log("Can't get GPS location, quitting..");
+        logger.log("Can't get GPS location, quitting..");
         return;
     }
     strncpy(buf, ret, BUFLEN);
-    log(String("") + "Got GPS location: " + buf);
+    logger.log(String("") + "Got GPS location: " + buf);
 
     /* Send GPS location */
     String data = String("") + "%5B" + buf + "%5D";
     bool ret2 = gprs.send_post(collect_url, api_key, data.c_str());
     if (!ret2) {
-        log("Sending GPS location failed, quitting..");
+        logger.log("Sending GPS location failed, quitting..");
         return;
     }
-    log("GPS location sent successfully");
+    logger.log("GPS location sent successfully");
 }
 
 
 void process_sms() {
-    log("Received SMS");
+    logger.log("Received SMS");
     char *msg_s = gprs.read_sms();
     if (!msg_s) {
-        log("Can't read SMS");
+        logger.log("Can't read SMS");
         return;
     }
 
@@ -337,7 +291,7 @@ void process_sms() {
     else if (msg.startsWith("gpsloc"))
         process_cmd_gps_loc();
     else
-        log(String("Can't understand SMS message \"") + msg + "\"");
+        logger.log(String("") + "Can't understand SMS message \"" + msg + "\"");
 
     gprs.delete_sms();
 }
