@@ -16,6 +16,10 @@ extern const unsigned long INTERVAL_SMS;
 extern const char *apn;
 
 
+/* Tracking */
+extern const unsigned long INTERVAL_TRACKING;
+
+
 /* Collect */
 extern const char *collect_url;
 extern const char *api_key;

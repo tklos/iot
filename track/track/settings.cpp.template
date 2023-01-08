@@ -9,7 +9,11 @@ const long baud_gprs = 115200;
 
 const unsigned long INTERVAL_SMS = 5000;
 
-extern const char *apn = "internet";
+const char *apn = "internet";
+
+
+/* Tracking */
+const unsigned long INTERVAL_TRACKING = 60000;
 
 
 /* Collect */

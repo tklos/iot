@@ -23,6 +23,7 @@ SdFile sdlog;
 
 Log logger(serial, display, sdlog, gprs);
 Metro metro_sms(INTERVAL_SMS);
+Metro metro_tracking(INTERVAL_TRACKING);
 
 
 #define BUFLEN 255
@@ -31,6 +32,7 @@ char buf[BUFLEN];
 
 /* Status */
 bool gps_on = false;
+bool tracking_on = false;
 
 
 
@@ -167,6 +169,9 @@ void setup() {
 
 
 void loop() {
+	if (tracking_on && metro_tracking.check())
+		process_tracking();
+
 	if (metro_sms.check())
 		check_sms();
 
@@ -192,9 +197,15 @@ void check_sms() {
 }
 
 
+void process_tracking() {
+    process_cmd_gps_loc();
+}
+
+
 void process_cmd_status() {
     String msg = "Processing status";
     msg += String("\n") + "GPS: " + gps_on;
+    msg += String("\n") + "Tracking: " + tracking_on;
 
     logger.log(msg);
 }
@@ -225,6 +236,11 @@ void process_cmd_gps_off() {
     if (!gps_on) {
         logger.log("Already off, ignoring..");
         return;
+    }
+
+    if (tracking_on) {
+        logger.log("Tracking is on, switching off");
+        tracking_on = false;
     }
 
     bool ret = gprs.gps_off();
@@ -271,6 +287,40 @@ void process_cmd_gps_loc() {
 }
 
 
+void process_cmd_gps_start() {
+    logger.log("Processing GPS start");
+
+    if (tracking_on) {
+        logger.log("Tracking is already on, ignoring..");
+        return;
+    }
+
+    if (!gps_on) {
+        logger.log("GPS off, switching on..");
+        process_cmd_gps_on();
+        if (!gps_on) {
+            logger.log("Can't switch GPS on, quitting..");
+            return;
+        }
+    }
+
+    tracking_on = true;
+    metro_tracking.start();
+}
+
+
+void process_cmd_gps_stop() {
+    logger.log("Processing GPS stop");
+
+    if (!tracking_on) {
+        logger.log("Tracking is already off, ignoring..");
+        return;
+    }
+
+    tracking_on = false;
+}
+
+
 void process_sms() {
     logger.log("Received SMS");
     char *msg_s = gprs.read_sms();
@@ -290,6 +340,10 @@ void process_sms() {
         process_cmd_gps_off();
     else if (msg.startsWith("gpsloc"))
         process_cmd_gps_loc();
+    else if (msg.startsWith("gpsstart"))
+        process_cmd_gps_start();
+    else if (msg.startsWith("gpsstop"))
+        process_cmd_gps_stop();
     else
         logger.log(String("") + "Can't understand SMS message \"" + msg + "\"");
 
