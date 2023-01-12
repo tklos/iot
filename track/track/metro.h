@@ -14,9 +14,11 @@ public:
     }
 
     void start();
-    void reset();
+    void reset(unsigned long interval);
 
     bool check();
+
+    unsigned long get_interval_s();
 
 
 private:

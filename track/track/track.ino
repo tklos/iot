@@ -206,6 +206,8 @@ void process_cmd_status() {
     String msg = "Processing status";
     msg += String("\n") + "GPS: " + gps_on;
     msg += String("\n") + "Tracking: " + tracking_on;
+    if (tracking_on)
+        msg += String(" (") + metro_tracking.get_interval_s() + " s)";
 
     logger.log(msg);
 }
@@ -287,8 +289,8 @@ void process_cmd_gps_loc() {
 }
 
 
-void process_cmd_gps_start() {
-    logger.log("Processing GPS start");
+void process_cmd_gps_start(const String &msg) {
+    logger.log(String("") + "Processing GPS start: " + msg);
 
     if (tracking_on) {
         logger.log("Tracking is already on, ignoring..");
@@ -304,8 +306,23 @@ void process_cmd_gps_start() {
         }
     }
 
+    int interval = INTERVAL_TRACKING;
+
+    /* Read optional tracking interval */
+    String msg_(msg);
+    msg_.remove(0, strlen("gpsstart"));
+    msg_.trim();
+    if (msg_.length() > 0) {
+        interval = msg_.toInt() * 1000;
+        if (interval <= 0) {
+            logger.log("Interval is lte 0 or incorrect, quitting..");
+            return;
+        }
+    }
+    logger.log(String("") + "Using interval of " + interval / 1000 + " s");
+
     tracking_on = true;
-    metro_tracking.start();
+    metro_tracking.reset(interval);
 }
 
 
@@ -341,7 +358,7 @@ void process_sms() {
     else if (msg.startsWith("gpsloc"))
         process_cmd_gps_loc();
     else if (msg.startsWith("gpsstart"))
-        process_cmd_gps_start();
+        process_cmd_gps_start(msg);
     else if (msg.startsWith("gpsstop"))
         process_cmd_gps_stop();
     else

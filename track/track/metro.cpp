@@ -9,8 +9,9 @@ void Metro::start() {
 }
 
 
-void Metro::reset() {
-    previous_time = millis() - interval;
+void Metro::reset(unsigned long interval) {
+    this->interval = interval;
+    start();
 }
 
 
@@ -25,4 +26,9 @@ bool Metro::check() {
     }
 
     return false;
+}
+
+
+unsigned long Metro::get_interval_s() {
+    return interval / 1000;
 }
