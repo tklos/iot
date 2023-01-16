@@ -1,0 +1,25 @@
+#include "settings.h"
+
+
+const long baud_monitor = 115200;
+
+
+/* GPRS */
+const long baud_gprs = 115200;
+
+const unsigned long INTERVAL_SMS = 5000;
+
+const char *apn = "internet";
+
+
+/* Tracking */
+const unsigned long INTERVAL_TRACKING = 60000;
+
+
+/* Collect */
+const char *collect_url = "http{,s}://(server)/api/measurements/";
+const char *api_key = "(api-key)";
+
+
+/* SD */
+const String log_dir = "log";
